@@ -1,8 +1,7 @@
 user_config role
 =========
 [![License](https://img.shields.io/badge/license-Apache-green.svg?style=flat)](https://raw.githubusercontent.com/Thalamus-am/ansible-role-user-config/master/LICENSE)
-![Ansible](https://img.shields.io/ansible/role/d/role_id.svg)
-![Ansible](https://img.shields.io/badge/dynamic/json.svg?label=min_ansible_version&url=https%3A%2F%2Fgalaxy.ansible.com%2Fapi%2Fv1%2Froles%2Frole_id%2F&query=$.min_ansible_version)
+[![Ansible](https://img.shields.io/badge/Ansible--lint-rules%20table-blue.svg)](https://docs.ansible.com/ansible-lint/rules/default_rules.html)
 
 A brief description of the role goes here.
 
