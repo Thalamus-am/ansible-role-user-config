@@ -1,0 +1,93 @@
+---
+# tasks file for user_config
+- name: Create Group
+  group:
+    name: "{{ user_config_group_name }}"
+    state: present
+  tags:
+    - auth
+
+- name: Add sudo permissions for user_config group
+  template:
+    src: templates/devops.sudo.j2
+    dest: "/etc/sudoers.d/{{ user_config_group_name }}"
+    mode: 0600
+    owner: root
+  tags:
+    - auth
+    - sudo
+
+- name: Prepopulate users with default values
+  set_fact:
+    ext_ssh_users_populated: "{{ ext_ssh_users_populated|default([]) + [ user_config_user_defaults|combine(item) ] }}"
+  with_list: "{{ user_config_users }}"
+  # no_log: true
+  when: user_config_users is defined
+
+- name: Combine default and defined users
+  set_fact:
+    user_config_users: "{{ ext_ssh_users_populated|default([]) + user_config_default_ssh_users }}"
+  no_log: true
+
+- name: Create user
+  user:
+    name: "{{ user_item.login }}"
+    comment: "{{ user_item.fullname }}"
+    shell: /bin/bash
+    groups: '{{ user_config_group_name }}'
+    home: /home/{{ user_item.login }}
+    move_home: true
+    state: present
+    password: "{{ user_item.password|default('*') }}"
+  when: user_item.enabled
+  loop_control:
+    loop_var: user_item
+  with_list: "{{ user_config_users }}"
+
+- name: Set up multiple authorized keys
+  authorized_key:
+    user: "{{ user_item.0.login }}"
+    state: present
+    key: "{{ lookup('file', 'ssh_keys/{{ user_item.1 }}') }}"
+  when: user_item.0.enabled
+  loop_control:
+    loop_var: user_item
+  with_subelements:
+    - "{{ user_config_users }}"
+    - ssh_keys
+
+- name: Deactivate user accounts
+  user:
+    name: "{{ user_item.login }}"
+    comment: "{{ user_item.fullname }}"
+    shell: /usr/sbin/nologin
+    groups: '{{ user_config_group_name }}'
+    home: /home/{{ user_item.login }}
+    move_home: true
+    state: present
+  when: not user_item.enabled
+  loop_control:
+    loop_var: user_item
+  with_list: "{{ user_config_users }}"
+
+- name: Disable authorized keys
+  authorized_key:
+    user: "{{ user_item.0.login }}"
+    state: absent
+    key: "{{ lookup('file', 'ssh_keys/{{ user_item.1 }}') }}"
+  when: not user_item.0.enabled
+  loop_control:
+    loop_var: user_item
+  with_subelements:
+    - "{{ user_config_users }}"
+    - ssh_keys
+
+- name: Delete user accounts
+  user:
+    name: "{{ user_item.login }}"
+    remove: true
+    state: absent
+  when: not user_item.enabled and user_item.deleted
+  loop_control:
+    loop_var: user_item
+  with_list: "{{ user_config_users }}"

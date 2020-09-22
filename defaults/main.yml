@@ -1,0 +1,14 @@
+---
+# defaults file for user_config
+user_config_group_name: devops
+user_config_user_defaults:
+  enabled: true
+  deleted: false
+
+user_config_default_ssh_users:
+  - login: kdanielyan
+    fullname: Karen Danielyan
+    ssh_keys:
+      - karen_danielyan.pub
+    enabled: true
+    deleted: false
